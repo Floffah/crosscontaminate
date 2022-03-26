@@ -1,10 +1,23 @@
 import { KeychainDexie } from "src/lib/db/clientdb";
+import TypedEmitter from "typed-emitter";
 
-export interface CommsLayer {
+export type CommsLayerEvents = {
+    keychainAltered: () => void;
+};
+
+export interface CommsLayerKeychainData<Initialised extends boolean> {
+    keychainInitialised: Initialised;
+
+    setKeychain: Initialised extends false
+        ? (keychain: KeychainDexie) => void
+        : undefined;
+}
+
+export interface CommsLayer extends CommsLayerKeychainData<boolean> {
     openExternal(url: string): Promise<void>;
     openDataFolder(): Promise<void>;
 
-    keychain: KeychainDexie;
+    events: TypedEmitter<CommsLayerEvents>;
 }
 
 export enum CommsChannels {

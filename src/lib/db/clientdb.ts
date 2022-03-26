@@ -1,4 +1,4 @@
-import Dexie from "dexie";
+import Dexie, { Table } from "dexie";
 
 export interface KeychainEntry {
     id: number;
@@ -7,13 +7,15 @@ export interface KeychainEntry {
 }
 
 export class KeychainDexie extends Dexie {
-    keychain!: Dexie.Table<KeychainEntry, string>;
+    keychain: Table<KeychainEntry, string>;
 
     constructor() {
         super("crosscontaminateKeychain");
 
-        this.version(2).stores({
+        this.version(1).stores({
             keychain: "++id, name, value",
         });
+
+        this.keychain = this.table("keychain");
     }
 }

@@ -6,6 +6,10 @@ import { AddressInfo } from "net";
 import { resolve } from "path";
 import { DatabaseProvider } from "src/api/dbprovider";
 import { registerIPCMainHandlers } from "app/ipcmainHandlers";
+import chalk from "chalk";
+import { Config } from "src/typings/config";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { parse as parseIni, stringify as stringifyIni } from "ini";
 
 // chalk.level = 3;
 
@@ -43,6 +47,27 @@ let tray: Tray | null = null,
 
     registerIPCMainHandlers();
 
+    const configLocation = resolve(
+        app.getPath("userData"),
+        "crosscontaminate-config.ini",
+    );
+    console.log(
+        chalk.green("info!"),
+        "Using config",
+        chalk.cyan(configLocation),
+    );
+
+    let config: Config;
+
+    if (existsSync(configLocation))
+        config = parseIni(readFileSync(configLocation, "utf8")) as Config;
+    else
+        config = {
+            server: {
+                port: 0,
+            },
+        };
+
     const nextApp = next({
         dev: process.env.NODE_ENV === "development",
         // conf: require("../next.config"),
@@ -57,7 +82,7 @@ let tray: Tray | null = null,
         }
         const parsedUrl = parse(req.url as string, true);
         await handle(req, res, parsedUrl);
-    }).listen(0);
+    }).listen(config.server.port);
 
     const addr = server.address();
     if (!addr || typeof addr === "string") {
@@ -81,6 +106,9 @@ let tray: Tray | null = null,
     ]);
 
     tray.setContextMenu(trayMenu);
+
+    config.server.port = port;
+    writeFileSync(configLocation, stringifyIni(config));
 
     await win.loadURL(`http://localhost:${port}`);
     win.show();

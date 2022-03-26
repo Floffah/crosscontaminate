@@ -13,7 +13,7 @@ export function Dashboard() {
                 <span
                     className="text-stone-500 no-underline active:!text-stone-600"
                     onClick={() =>
-                        window.Comms.openExternal(
+                        window.comms.openExternal(
                             "https://github.com/floffah/crosscontaminate",
                         )
                     }

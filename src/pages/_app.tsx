@@ -3,8 +3,18 @@ import { AppProps } from "next/app";
 import { DefaultSeo } from "next-seo";
 import { withTRPC } from "@trpc/next";
 import { AppRouter } from "src/api/router";
+import { KeychainDexie } from "src/lib/db/clientdb";
+import { useEffect } from "react";
 
 function App(p: AppProps) {
+    useEffect(() => {
+        if (window.comms.setKeychain && !window.comms.keychainInitialised) {
+            const keychain = new KeychainDexie();
+            window.comms.setKeychain(keychain);
+            window.keychain = keychain;
+        }
+    }, []);
+
     return (
         <>
             <DefaultSeo

@@ -29,7 +29,7 @@ export function Settings() {
 
             <Button
                 className="mt-2"
-                onClick={() => window.Comms.openDataFolder()}
+                onClick={() => window.comms.openDataFolder()}
             >
                 Open data folder
             </Button>

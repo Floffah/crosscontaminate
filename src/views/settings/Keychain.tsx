@@ -2,7 +2,7 @@ import { Input } from "src/components/input/Input";
 import Icon from "@mdi/react";
 import { mdiPlus } from "@mdi/js";
 import { Button } from "src/components/input/Button";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import clsx from "clsx";
 import { KeychainEntry } from "src/lib/db/clientdb";
 
@@ -11,6 +11,10 @@ export function KeychainSettings() {
     const [newKeyNameError, setNewKeyNameError] = useState(false);
     const [newKeyValueValue, setNewKeyValueValue] = useState("");
     const [newKeyValueError, setNewKeyValueError] = useState(false);
+
+    const [keychainKeys, setKeychainKeys] = useState<
+        Omit<KeychainEntry, "value">[]
+    >([]);
 
     const ensureValid = () => {
         const nameInvalid = /^\s*$/.test(newKeyNameValue);
@@ -31,20 +35,60 @@ export function KeychainSettings() {
         const valid = ensureValid();
         if (!valid) return false;
 
-        window.Comms.keychain.keychain.add(
+        window.keychain.keychain.add(
             {
                 name: newKeyNameValue,
                 value: newKeyValueValue,
             } as KeychainEntry,
             newKeyNameValue,
         );
+        window.comms.events.emit("keychainAltered");
 
         return false;
     };
 
+    useEffect(() => {
+        const recalculateKeys = async () => {
+            const keys = await window.keychain.keychain.toArray();
+
+            console.log(keys);
+
+            setKeychainKeys(keys.map((k) => ({ ...k, value: undefined })));
+        };
+
+        recalculateKeys();
+
+        console.log(window.comms);
+        window.comms.events.addListener("keychainAltered", recalculateKeys);
+
+        return () => {
+            window.comms.events.removeListener(
+                "keychainAltered",
+                recalculateKeys,
+            );
+        };
+    }, []);
+
     return (
         <>
             <div>
+                <div className="mt-1.5 mb-3">
+                    {keychainKeys.length <= 0 ? (
+                        <p className="text-sm text-stone-400">No keys yet!</p>
+                    ) : (
+                        keychainKeys.map((k) => (
+                            <div key={k.id}>
+                                <p className="inline-block align-top text-stone-300">
+                                    {k.name}
+                                </p>
+                                <p className="mt-1 ml-3 inline-block align-top text-stone-400">
+                                    ************
+                                </p>
+                            </div>
+                        ))
+                    )}
+                </div>
+
                 <form onSubmit={onSubmitNewKey}>
                     <Input
                         placeholder="Name"
